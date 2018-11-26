@@ -28,10 +28,10 @@ Then just include the package at the top of your file:
 
 `import "github.com/nucypher/goUmbral/umbral"`
 
-> For Windows:
+On Windows:
 > Change cgo flags to `LDFLAGS: -llibcrypto` in build.go
 
-> For Mac:
+On Mac:
 > OpenSSL 1.1 or above is necessay. Apple's official support version would  causes link errors.
 > If two or above OpenSSL version exists, link path should be specified with `LDFLAGS`
 > Example: `LDFLAGS: -L/usr/local/opt/openssl@1.1/lib -lcrypto`
