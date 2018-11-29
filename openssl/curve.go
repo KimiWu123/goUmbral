@@ -19,63 +19,72 @@ package openssl
 // #include "shim.h"
 import "C"
 import (
-    "errors"
+	"errors"
 )
 
 // Supported curves
 const (
-    SECP256R1 = C.NID_X9_62_prime256v1
-    SECP256K1 = C.NID_secp256k1
-    SECP384R1 = C.NID_secp384r1
+	SECP256R1 = C.NID_X9_62_prime256v1
+	SECP256K1 = C.NID_secp256k1
+	SECP384R1 = C.NID_secp384r1
 )
 
 type Curve struct {
-    NID int
-    Group ECGroup
-    Order BigNum
-    Generator ECPoint
+	NID       int
+	Group     ECGroup
+	Order     BigNum
+	Generator ECPoint
 }
 
 func NewCurve(nid C.int) (*Curve, error) {
-    // Do not use cast from an int to a C.int with an unsupported curve nid.
-    // Use the constant curve values above instead.
+	// Do not use cast from an int to a C.int with an unsupported curve nid.
+	// Use the constant curve values above instead.
 
-    // Runtime check below just to be sure.
-    // Could default to a certain curve instead of returning an error.
-    switch nid {
-    case SECP256R1:
-    case SECP256K1:
-    case SECP384R1:
-    default:
-        return nil, errors.New("This curve is not supported. Please use one of the constant curves defined in curve.go.")
-    }
-    group, err := GetECGroupByCurveNID(nid)
-    if err != nil {
-        return nil, err
-    }
-    order, err := GetECOrderByGroup(group)
-    if err != nil {
-        return nil, err
-    }
-    generator, err := GetECGeneratorByGroup(group)
-    if err != nil {
-        return nil, err
-    }
-    return &Curve{int(nid), group, order, generator}, nil
+	// Runtime check below just to be sure.
+	// Could default to a certain curve instead of returning an error.
+	switch nid {
+	case SECP256R1:
+	case SECP256K1:
+	case SECP384R1:
+	default:
+		return nil, errors.New("This curve is not supported. Please use one of the constant curves defined in curve.go.")
+	}
+	group, err := GetECGroupByCurveNID(nid)
+	if err != nil {
+		return nil, err
+	}
+	order, err := GetECOrderByGroup(group)
+	if err != nil {
+		return nil, err
+	}
+	generator, err := GetECGeneratorByGroup(group)
+	if err != nil {
+		return nil, err
+	}
+	return &Curve{int(nid), group, order, generator}, nil
 }
 
 func (m *Curve) Equals(other *Curve) bool {
-    return m.NID == other.NID
+	return m.NID == other.NID
 }
 
 func (m *Curve) FieldOrderSize() uint {
-    bits := GetECGroupDegree(m.Group)
-    return (bits + 7) / 8
+	bits := GetECGroupDegree(m.Group)
+	return (bits + 7) / 8
+}
+
+func (m *Curve) GroupOrderSize() (uint, error) {
+	bytes, err := BNToBytes(m.Order)
+	if err != nil {
+		return 0, err
+	}
+	return uint(len(bytes)), nil
+
 }
 
 func (m *Curve) Free() {
-    FreeBigNum(m.Order)
-    FreeECGroup(m.Group)
-    // The generator is already freed by freeing the EC_GROUP.
-    // FreeECPoint(m.Generator)
+	FreeBigNum(m.Order)
+	FreeECGroup(m.Group)
+	// The generator is already freed by freeing the EC_GROUP.
+	// FreeECPoint(m.Generator)
 }
