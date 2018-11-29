@@ -1,12 +1,15 @@
 package goUmbral
 
 import (
+	"crypto/ecdsa"
 	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"io"
 	"math"
 	"math/rand"
 
+	"github.com/ethereum/go-ethereum/crypto"
 	umbralMath "github.com/nucypher/goUmbral/math"
 	"golang.org/x/crypto/hkdf"
 	"golang.org/x/crypto/nacl/secretbox"
@@ -109,6 +112,15 @@ func (u *UmbralPrivateKey) Bytes(password []byte, scryptCost int) ([]byte, error
 	}
 
 	return umbralPrvKey, nil
+}
+
+func (u *UmbralPrivateKey) ECDSAPrivateKey(password []byte, scryptCost int) (*ecdsa.PrivateKey, error) {
+	key, err := u.Bytes(password, scryptCost)
+	if err != nil {
+		return nil, err
+	}
+
+	return crypto.HexToECDSA(hex.EncodeToString(key))
 }
 
 func (u *UmbralPrivateKey) GetPubKey() *UmbralPublicKey {
